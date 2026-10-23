@@ -1,5 +1,7 @@
 const Project = require('../models/Project');
 const User = require('../models/User');
+const Task = require('../models/Task');
+const Comment = require('../models/Comment');
 
 /**
  * @desc    Get all accessible projects
@@ -10,7 +12,7 @@ const getProjects = async (req, res, next) => {
   try {
     let query = {};
 
-    // If status filter provided
+    // Filter by status if provided
     if (req.query.status) {
       query.status = req.query.status;
     }
@@ -81,7 +83,7 @@ const createProject = async (req, res, next) => {
   try {
     const { title, description, managerId } = req.body;
 
-    if (!title) {
+    if (!title || !title.trim()) {
       return res.status(400).json({ success: false, message: 'Project title is required' });
     }
 
@@ -95,8 +97,8 @@ const createProject = async (req, res, next) => {
     }
 
     const project = await Project.create({
-      title,
-      description: description || '',
+      title: title.trim(),
+      description: description ? description.trim() : '',
       manager: assignedManager,
       members: [
         {
@@ -130,16 +132,17 @@ const updateProject = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Project not found' });
     }
 
-    // Only Admin or project's manager can update
-    if (req.user.role !== 'Admin' && (!project.manager || !project.manager.equals(req.user._id))) {
+    // Only Admin or project's assigned manager can update
+    const isAssignedManager = project.manager && project.manager.equals(req.user._id);
+    if (req.user.role !== 'Admin' && !isAssignedManager) {
       return res.status(403).json({
         success: false,
         message: 'Forbidden: Only the assigned Project Manager or Admin can update this project'
       });
     }
 
-    if (title) project.title = title;
-    if (description !== undefined) project.description = description;
+    if (title && title.trim()) project.title = title.trim();
+    if (description !== undefined) project.description = description.trim();
 
     await project.save();
 
@@ -166,7 +169,8 @@ const archiveProject = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Project not found' });
     }
 
-    if (req.user.role !== 'Admin' && (!project.manager || !project.manager.equals(req.user._id))) {
+    const isAssignedManager = project.manager && project.manager.equals(req.user._id);
+    if (req.user.role !== 'Admin' && !isAssignedManager) {
       return res.status(403).json({
         success: false,
         message: 'Forbidden: Only the assigned Project Manager or Admin can archive this project'
@@ -187,6 +191,49 @@ const archiveProject = async (req, res, next) => {
 };
 
 /**
+ * @desc    Delete project (Admin only) with cascade delete of tasks and comments
+ * @route   DELETE /api/projects/:id
+ * @access  Private (Admin only)
+ */
+const deleteProject = async (req, res, next) => {
+  try {
+    if (req.user.role !== 'Admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Forbidden: Only administrators can delete projects'
+      });
+    }
+
+    const project = await Project.findById(req.params.id);
+    if (!project) {
+      return res.status(404).json({ success: false, message: 'Project not found' });
+    }
+
+    // Cascade delete: find tasks belonging to this project
+    const projectTasks = await Task.find({ project: project._id }).select('_id');
+    const taskIds = projectTasks.map((t) => t._id);
+
+    // Delete comments on tasks
+    if (taskIds.length > 0) {
+      await Comment.deleteMany({ task: { $in: taskIds } });
+    }
+
+    // Delete tasks
+    await Task.deleteMany({ project: project._id });
+
+    // Delete project
+    await project.deleteOne();
+
+    res.status(200).json({
+      success: true,
+      message: 'Project and all associated tasks and comments deleted successfully'
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
  * @desc    Add member to project
  * @route   POST /api/projects/:id/members
  * @access  Private (Admin or assigned PM)
@@ -200,7 +247,8 @@ const addMember = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Project not found' });
     }
 
-    if (req.user.role !== 'Admin' && (!project.manager || !project.manager.equals(req.user._id))) {
+    const isAssignedManager = project.manager && project.manager.equals(req.user._id);
+    if (req.user.role !== 'Admin' && !isAssignedManager) {
       return res.status(403).json({
         success: false,
         message: 'Forbidden: Only the assigned Project Manager or Admin can add team members'
@@ -254,7 +302,8 @@ const updateMemberRole = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Project not found' });
     }
 
-    if (req.user.role !== 'Admin' && (!project.manager || !project.manager.equals(req.user._id))) {
+    const isAssignedManager = project.manager && project.manager.equals(req.user._id);
+    if (req.user.role !== 'Admin' && !isAssignedManager) {
       return res.status(403).json({
         success: false,
         message: 'Forbidden: Only the assigned Project Manager or Admin can change member roles'
@@ -291,7 +340,8 @@ const removeMember = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Project not found' });
     }
 
-    if (req.user.role !== 'Admin' && (!project.manager || !project.manager.equals(req.user._id))) {
+    const isAssignedManager = project.manager && project.manager.equals(req.user._id);
+    if (req.user.role !== 'Admin' && !isAssignedManager) {
       return res.status(403).json({
         success: false,
         message: 'Forbidden: Only the assigned Project Manager or Admin can remove members'
@@ -320,6 +370,7 @@ module.exports = {
   createProject,
   updateProject,
   archiveProject,
+  deleteProject,
   addMember,
   updateMemberRole,
   removeMember

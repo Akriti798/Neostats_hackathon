@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { projectService, taskService, userService } from '../services/api';
 import Modal from '../components/Modal';
@@ -7,6 +7,7 @@ import Alert from '../components/Alert';
 
 export default function ProjectDetails() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { user } = useAuth();
 
   const [project, setProject] = useState(null);
@@ -135,6 +136,17 @@ export default function ProjectDetails() {
     }
   };
 
+  const handleDeleteProject = async () => {
+    if (!window.confirm(`Are you sure you want to permanently delete "${project?.title}" and all its tasks? This action cannot be undone.`)) return;
+
+    try {
+      await projectService.delete(id);
+      navigate('/projects');
+    } catch (err) {
+      setError(err.message || 'Failed to delete project');
+    }
+  };
+
   if (loading) {
     return (
       <div className="main-content">
@@ -181,6 +193,11 @@ export default function ProjectDetails() {
           {canManageProject && (
             <button className="btn btn-primary" onClick={() => setIsTaskModalOpen(true)}>
               + Create Task
+            </button>
+          )}
+          {user?.role === 'Admin' && (
+            <button className="btn btn-danger" onClick={handleDeleteProject} title="Delete Project (Admin only)">
+              Delete Project
             </button>
           )}
         </div>

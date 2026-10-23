@@ -6,6 +6,7 @@ const {
   createProject,
   updateProject,
   archiveProject,
+  deleteProject,
   addMember,
   updateMemberRole,
   removeMember
@@ -21,7 +22,8 @@ router.route('/')
 
 router.route('/:id')
   .get(getProjectById)
-  .put(updateProject);
+  .put(updateProject)
+  .delete(authorize('Admin'), deleteProject);
 
 router.patch('/:id/archive', archiveProject);
 

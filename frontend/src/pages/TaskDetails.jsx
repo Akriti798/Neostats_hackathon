@@ -157,6 +157,9 @@ export default function TaskDetails() {
   };
 
   const isViewer = user?.role === 'Viewer';
+  const isTeamMember = user?.role === 'Team Member';
+  const isAssigned = (task?.assignee?._id || task?.assignee) === user?._id;
+  const canEditTask = user?.role === 'Admin' || user?.role === 'Project Manager' || (isTeamMember && isAssigned);
   const canDeleteTask = user?.role === 'Admin' || user?.role === 'Project Manager';
 
   if (loading) {
@@ -255,7 +258,7 @@ export default function TaskDetails() {
                 className="form-input"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                disabled={isViewer}
+                disabled={!canEditTask}
                 required
               />
             </div>
@@ -268,7 +271,7 @@ export default function TaskDetails() {
                 rows={4}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                disabled={isViewer}
+                disabled={!canEditTask}
               />
             </div>
 
@@ -280,7 +283,7 @@ export default function TaskDetails() {
                   className="form-select"
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
-                  disabled={isViewer}
+                  disabled={!canEditTask}
                 >
                   <option value="TODO">To Do</option>
                   <option value="IN_PROGRESS">In Progress</option>
@@ -296,7 +299,7 @@ export default function TaskDetails() {
                   className="form-select"
                   value={priority}
                   onChange={(e) => setPriority(e.target.value)}
-                  disabled={isViewer}
+                  disabled={!canEditTask || isTeamMember}
                 >
                   <option value="LOW">Low</option>
                   <option value="MEDIUM">Medium</option>
@@ -312,7 +315,17 @@ export default function TaskDetails() {
               </p>
             </div>
 
-            {!isViewer && (
+            {!canEditTask && (
+              <p className="text-muted text-sm" style={{ padding: '0.5rem 0', fontStyle: 'italic' }}>
+                {isViewer
+                  ? 'Viewers have read-only access to tasks.'
+                  : isTeamMember && !isAssigned
+                  ? 'Team members can only update tasks assigned to them.'
+                  : 'You do not have permission to modify this task.'}
+              </p>
+            )}
+
+            {canEditTask && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1.5rem' }}>
                 <button type="submit" className="btn btn-primary" disabled={updating}>
                   {updating ? 'Saving...' : `Save Changes (Version: v${task.version ?? 1})`}

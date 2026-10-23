@@ -8,10 +8,15 @@ const Comment = require('./models/Comment');
 const seedData = async () => {
   try {
     const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/neostats_db';
-    console.log(`[Seed] Connecting to MongoDB: ${mongoUri}...`);
+    console.log(`[Seed] Target Database: ${mongoUri}`);
+    console.log('[Seed] ==============================================================');
+    console.log('[Seed] WARNING: This is a destructive operation that will reset and');
+    console.log('[Seed] re-populate the collections with official hackathon demo data.');
+    console.log('[Seed] ==============================================================');
+
     await mongoose.connect(mongoUri);
 
-    console.log('[Seed] Clearing existing collections...');
+    console.log('[Seed] Clearing existing collections (User, Project, Task, Comment)...');
     await Promise.all([
       User.deleteMany({}),
       Project.deleteMany({}),
@@ -19,7 +24,7 @@ const seedData = async () => {
       Comment.deleteMany({})
     ]);
 
-    console.log('[Seed] Creating demo users for all 4 roles...');
+    console.log('[Seed] Creating demo accounts for all 4 required roles...');
     const users = await User.create([
       {
         name: 'Alex Morgan',
@@ -90,7 +95,7 @@ const seedData = async () => {
 
     const [project1, project2] = projects;
 
-    console.log('[Seed] Creating sample tasks with version numbers...');
+    console.log('[Seed] Creating sample tasks with OCC versioning...');
     const tasks = await Task.create([
       {
         project: project1._id,
@@ -130,7 +135,7 @@ const seedData = async () => {
       }
     ]);
 
-    console.log('[Seed] Creating discussion comments...');
+    console.log('[Seed] Creating sample discussion comments...');
     await Comment.create([
       {
         task: tasks[0]._id,
@@ -144,14 +149,14 @@ const seedData = async () => {
       }
     ]);
 
-    console.log('\n[Seed Success] Database populated successfully!');
-    console.log('--------------------------------------------------');
+    console.log('\n[Seed Success] Database populated safely and successfully!');
+    console.log('------------------------------------------------------------');
     console.log('Demo Credentials for Evaluators:');
     console.log('  Admin:           admin@neostats.com  |  Admin@123');
     console.log('  Project Manager: pm@neostats.com     |  Pm@123');
     console.log('  Team Member:     dev@neostats.com    |  Dev@123');
     console.log('  Viewer:          viewer@neostats.com |  Viewer@123');
-    console.log('--------------------------------------------------');
+    console.log('------------------------------------------------------------');
 
     process.exit(0);
   } catch (error) {

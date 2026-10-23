@@ -89,6 +89,18 @@ export default function Projects() {
     }
   };
 
+  const handleDeleteProject = async (id, projectTitle) => {
+    if (!window.confirm(`Are you sure you want to permanently delete "${projectTitle}" and all its tasks? This action cannot be undone.`)) return;
+
+    try {
+      await projectService.delete(id);
+      setSuccess(`Project "${projectTitle}" has been deleted.`);
+      loadProjects();
+    } catch (err) {
+      setError(err.message || 'Failed to delete project');
+    }
+  };
+
   return (
     <div className="main-content">
       <div className="page-header">
@@ -163,6 +175,15 @@ export default function Projects() {
                     onClick={() => handleArchiveProject(proj._id, proj.title)}
                   >
                     Archive
+                  </button>
+                )}
+                {user?.role === 'Admin' && (
+                  <button
+                    className="btn btn-danger btn-sm"
+                    onClick={() => handleDeleteProject(proj._id, proj.title)}
+                    title="Delete Project (Admin only)"
+                  >
+                    Delete
                   </button>
                 )}
               </div>
