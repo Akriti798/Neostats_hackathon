@@ -31,13 +31,6 @@ export default function Login() {
     }
   };
 
-  // Helper to fill the inputs with official seeded demo credentials
-  const autofillCredentials = (demoEmail, demoPassword) => {
-    setEmail(demoEmail);
-    setPassword(demoPassword);
-    setError('');
-  };
-
   return (
     <div className="auth-page">
       <div className="auth-card">
@@ -82,48 +75,9 @@ export default function Login() {
             style={{ width: '100%', marginTop: '0.5rem' }}
             disabled={submitting}
           >
-            {submitting ? 'Authenticating with MongoDB...' : 'Sign In'}
+            {submitting ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
-
-        <div className="demo-login-box">
-          <p className="text-muted text-sm" style={{ fontWeight: 600, textAlign: 'center' }}>
-            Seeded Demo Accounts (Click to Fill Credentials)
-          </p>
-          <div className="demo-btn-grid">
-            <button
-              type="button"
-              className="btn-secondary btn-sm"
-              onClick={() => autofillCredentials('admin@neostats.com', 'Admin@123')}
-            >
-              Fill Admin
-            </button>
-            <button
-              type="button"
-              className="btn-secondary btn-sm"
-              onClick={() => autofillCredentials('pm@neostats.com', 'Pm@123')}
-            >
-              Fill Project Manager
-            </button>
-            <button
-              type="button"
-              className="btn-secondary btn-sm"
-              onClick={() => autofillCredentials('dev@neostats.com', 'Dev@123')}
-            >
-              Fill Team Member
-            </button>
-            <button
-              type="button"
-              className="btn-secondary btn-sm"
-              onClick={() => autofillCredentials('viewer@neostats.com', 'Viewer@123')}
-            >
-              Fill Viewer
-            </button>
-          </div>
-          <p className="text-muted text-sm" style={{ textAlign: 'center', marginTop: '0.75rem', fontSize: '0.78rem' }}>
-            Clicking fills credentials into the form. Press <strong>Sign In</strong> to authenticate via backend.
-          </p>
-        </div>
       </div>
     </div>
   );
