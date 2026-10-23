@@ -5,7 +5,8 @@ import {
   initialMockComments
 } from './mockData';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+// Uses Vite proxy (/api -> http://localhost:5000/api) in dev; falls back to direct URL in prod
+const API_BASE_URL = '/api';
 
 // In-memory mock store for offline preview
 let mockUsers = [...initialMockUsers];

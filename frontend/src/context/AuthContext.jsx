@@ -5,42 +5,64 @@ import { initialMockUsers } from '../services/mockData';
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem('collab_user');
-    return saved ? JSON.parse(saved) : null;
-  });
+  const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('token') || null);
-  const [loading, setLoading] = useState(false);
+  // Start loading only if we have a stored token to verify
+  const [loading, setLoading] = useState(!!localStorage.getItem('token'));
 
   useEffect(() => {
-    // If we have token but no user, try restoring from backend
     async function restoreSession() {
-      if (token && !user) {
+      const storedToken = localStorage.getItem('token');
+      if (!storedToken) {
+        setLoading(false);
+        return;
+      }
+
+      // Restore user from storage immediately so UI doesn't flash
+      const storedUser = localStorage.getItem('collab_user');
+      if (storedUser) {
         try {
-          const res = await authService.getMe();
-          if (res && res.user) {
-            setUser(res.user);
-            localStorage.setItem('collab_user', JSON.stringify(res.user));
-          }
+          setUser(JSON.parse(storedUser));
         } catch {
-          // Keep current state
+          // ignore malformed storage
         }
       }
-    }
-    restoreSession();
-  }, [token]);
 
+      // Attempt to validate with real backend
+      try {
+        const res = await authService.getMe();
+        if (res && res.user) {
+          setUser(res.user);
+          localStorage.setItem('collab_user', JSON.stringify(res.user));
+          // Real backend responded — disable mock mode
+          localStorage.removeItem('collab_mock_mode');
+        }
+      } catch {
+        // Backend offline — keep mock user from storage
+        console.warn('[CollabWorkers] Backend offline. Using stored preview session.');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    restoreSession();
+  }, []);
+
+  /**
+   * Real JWT login — used when backend is running
+   */
   const login = async (email, password) => {
     const data = await authService.login(email, password);
     localStorage.setItem('token', data.token);
     localStorage.setItem('collab_user', JSON.stringify(data.user));
+    localStorage.removeItem('collab_mock_mode'); // disable mock mode on real login
     setToken(data.token);
     setUser(data.user);
     return data.user;
   };
 
   /**
-   * One-click demo login for offline visual preview and fast evaluator role switching
+   * Instant preview login for offline/demo evaluation
    */
   const previewLogin = (roleName) => {
     const mockMatch = initialMockUsers.find((u) => u.role === roleName) || initialMockUsers[0];
@@ -64,10 +86,6 @@ export function AuthProvider({ children }) {
   };
 
   const role = user ? user.role : null;
-  const isAdmin = role === 'Admin';
-  const isProjectManager = role === 'Project Manager';
-  const isTeamMember = role === 'Team Member';
-  const isViewer = role === 'Viewer';
 
   const value = {
     user,
@@ -77,10 +95,10 @@ export function AuthProvider({ children }) {
     previewLogin,
     logout,
     role,
-    isAdmin,
-    isProjectManager,
-    isTeamMember,
-    isViewer
+    isAdmin: role === 'Admin',
+    isProjectManager: role === 'Project Manager',
+    isTeamMember: role === 'Team Member',
+    isViewer: role === 'Viewer'
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

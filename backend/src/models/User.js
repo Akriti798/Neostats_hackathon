@@ -36,22 +36,19 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-// Hash password before saving if modified
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) {
-    return next();
-  }
+// Hash password before saving — using promise-based approach (compatible with bcryptjs v3)
+userSchema.pre('save', async function () {
+  if (!this.isModified('password')) return;
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
-  next();
 });
 
-// Compare password
+// Compare plain password against hash
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return bcrypt.compare(enteredPassword, this.password);
 };
 
-// Safe JSON serialization (strip password)
+// Serialize without exposing the password hash
 userSchema.methods.toSafeObject = function () {
   const obj = this.toObject();
   delete obj.password;
