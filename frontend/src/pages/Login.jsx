@@ -9,7 +9,7 @@ export default function Login() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const { login, previewLogin } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -31,9 +31,11 @@ export default function Login() {
     }
   };
 
-  const handleInstantPreview = (roleName) => {
-    previewLogin(roleName);
-    navigate('/dashboard');
+  // Helper to fill the inputs with official seeded demo credentials
+  const autofillCredentials = (demoEmail, demoPassword) => {
+    setEmail(demoEmail);
+    setPassword(demoPassword);
+    setError('');
   };
 
   return (
@@ -56,7 +58,7 @@ export default function Login() {
               className="form-input"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="user@collabworkers.com"
+              placeholder="user@neostats.com"
               required
             />
           </div>
@@ -80,46 +82,46 @@ export default function Login() {
             style={{ width: '100%', marginTop: '0.5rem' }}
             disabled={submitting}
           >
-            {submitting ? 'Authenticating...' : 'Sign In'}
+            {submitting ? 'Authenticating with MongoDB...' : 'Sign In'}
           </button>
         </form>
 
         <div className="demo-login-box">
           <p className="text-muted text-sm" style={{ fontWeight: 600, textAlign: 'center' }}>
-            Instant Role Preview (Direct Access)
+            Seeded Demo Accounts (Click to Fill Credentials)
           </p>
           <div className="demo-btn-grid">
             <button
               type="button"
               className="btn-secondary btn-sm"
-              onClick={() => handleInstantPreview('Admin')}
+              onClick={() => autofillCredentials('admin@neostats.com', 'Admin@123')}
             >
-              Admin View
+              Fill Admin
             </button>
             <button
               type="button"
               className="btn-secondary btn-sm"
-              onClick={() => handleInstantPreview('Project Manager')}
+              onClick={() => autofillCredentials('pm@neostats.com', 'Pm@123')}
             >
-              Project Manager
+              Fill Project Manager
             </button>
             <button
               type="button"
               className="btn-secondary btn-sm"
-              onClick={() => handleInstantPreview('Team Member')}
+              onClick={() => autofillCredentials('dev@neostats.com', 'Dev@123')}
             >
-              Team Member
+              Fill Team Member
             </button>
             <button
               type="button"
               className="btn-secondary btn-sm"
-              onClick={() => handleInstantPreview('Viewer')}
+              onClick={() => autofillCredentials('viewer@neostats.com', 'Viewer@123')}
             >
-              Viewer View
+              Fill Viewer
             </button>
           </div>
           <p className="text-muted text-sm" style={{ textAlign: 'center', marginTop: '0.75rem', fontSize: '0.78rem' }}>
-            Click any role above to instantly inspect all pages, permissions, and features.
+            Clicking fills credentials into the form. Press <strong>Sign In</strong> to authenticate via backend.
           </p>
         </div>
       </div>
