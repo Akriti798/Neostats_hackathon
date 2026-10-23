@@ -28,13 +28,23 @@ export default function Dashboard() {
   const activeProjects = projects.filter((p) => p.status === 'Active');
   const archivedProjects = projects.filter((p) => p.status === 'Archived');
 
+  const getRoleBadgeClass = (role) => {
+    switch (role) {
+      case 'Admin': return 'badge-admin';
+      case 'Project Manager': return 'badge-pm';
+      case 'Team Member': return 'badge-member';
+      case 'Viewer': return 'badge-viewer';
+      default: return 'badge-default';
+    }
+  };
+
   return (
     <div className="main-content">
       <div className="page-header">
         <div>
-          <h1>Welcome back, {user?.name}</h1>
+          <h1>Dashboard</h1>
           <p className="text-muted">
-            Role: <strong>{user?.role}</strong> • NeoStats Collaborative Workspace
+            Signed in as <strong>{user?.name}</strong> • Role: <span className={`role-badge ${getRoleBadgeClass(user?.role)}`}>{user?.role}</span>
           </p>
         </div>
         <div>
@@ -63,12 +73,10 @@ export default function Dashboard() {
           <h2 style={{ color: 'var(--text-muted)', marginTop: '0.25rem' }}>{archivedProjects.length}</h2>
         </div>
         <div className="card" style={{ marginBottom: 0 }}>
-          <p className="text-muted text-sm">Your Role</p>
-          <div style={{ marginTop: '0.35rem' }}>
-            <span className={`role-badge badge-${user?.role === 'Admin' ? 'admin' : user?.role === 'Project Manager' ? 'pm' : user?.role === 'Team Member' ? 'member' : 'viewer'}`}>
-              {user?.role}
-            </span>
-          </div>
+          <p className="text-muted text-sm">Access Scope</p>
+          <h2 style={{ color: 'var(--text-main)', marginTop: '0.25rem', fontSize: '1.25rem' }}>
+            {user?.role === 'Admin' ? 'System Wide' : 'Assigned Projects'}
+          </h2>
         </div>
       </div>
 
@@ -77,7 +85,7 @@ export default function Dashboard() {
         <div className="page-header" style={{ marginBottom: '1rem' }}>
           <h3>Accessible Projects</h3>
           <Link to="/projects" className="text-sm" style={{ color: 'var(--primary)', textDecoration: 'none' }}>
-            View all &rarr;
+            View all projects &rarr;
           </Link>
         </div>
 
@@ -108,7 +116,7 @@ export default function Dashboard() {
                     <td>
                       <strong>{proj.title}</strong>
                       <p className="text-muted text-sm" style={{ margin: 0 }}>
-                        {proj.description ? proj.description.substring(0, 50) + '...' : 'No description'}
+                        {proj.description ? proj.description.substring(0, 60) + '...' : 'No description'}
                       </p>
                     </td>
                     <td>

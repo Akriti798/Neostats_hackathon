@@ -4,12 +4,7 @@ export default function Alert({ type = 'info', message, onDismiss, action }) {
   return (
     <div className={`alert-box alert-${type}`}>
       <div className="alert-content">
-        <span className="alert-icon">
-          {type === 'error' && '❌'}
-          {type === 'warning' && '⚠️'}
-          {type === 'success' && '✅'}
-          {type === 'info' && 'ℹ️'}
-        </span>
+        <span className={`alert-bullet bullet-${type}`}></span>
         <span className="alert-message">{message}</span>
       </div>
       <div className="alert-actions">

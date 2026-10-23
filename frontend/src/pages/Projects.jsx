@@ -39,7 +39,6 @@ export default function Projects() {
     loadProjects();
   }, [filterStatus]);
 
-  // Load project managers for creation dropdown
   useEffect(() => {
     if (canCreateProject) {
       userService.getAll()
@@ -65,7 +64,7 @@ export default function Projects() {
         description,
         managerId: managerId || undefined
       });
-      setSuccess('Project created successfully!');
+      setSuccess('Project created successfully.');
       setTitle('');
       setDescription('');
       setManagerId('');
@@ -79,11 +78,11 @@ export default function Projects() {
   };
 
   const handleArchiveProject = async (id, projectTitle) => {
-    if (!window.confirm(`Are you sure you want to archive "${projectTitle}"?`)) return;
+    if (!window.confirm(`Confirm archiving project "${projectTitle}"?`)) return;
 
     try {
       await projectService.archive(id);
-      setSuccess(`Project "${projectTitle}" archived.`);
+      setSuccess(`Project "${projectTitle}" has been archived.`);
       loadProjects();
     } catch (err) {
       setError(err.message || 'Failed to archive project');
@@ -95,7 +94,7 @@ export default function Projects() {
       <div className="page-header">
         <div>
           <h1>Projects</h1>
-          <p className="text-muted">Manage, organize, and monitor collaborative projects</p>
+          <p className="text-muted">Manage, organize, and track active project workspaces</p>
         </div>
         {canCreateProject && (
           <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
@@ -130,8 +129,8 @@ export default function Projects() {
           <h3>No projects found</h3>
           <p className="text-muted">
             {filterStatus === 'All'
-              ? 'Get started by creating your first project.'
-              : `No ${filterStatus.toLowerCase()} projects at this time.`}
+              ? 'No projects available in this environment.'
+              : `No ${filterStatus.toLowerCase()} projects recorded.`}
           </p>
         </div>
       ) : (
@@ -183,7 +182,7 @@ export default function Projects() {
               className="form-input"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Mobile App Redesign"
+              placeholder="e.g. Core Payment Gateway Integration"
               required
             />
           </div>
@@ -195,7 +194,7 @@ export default function Projects() {
               className="form-textarea"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Summary of goals and milestones..."
+              placeholder="Summary of deliverables, constraints, and scope..."
             />
           </div>
 

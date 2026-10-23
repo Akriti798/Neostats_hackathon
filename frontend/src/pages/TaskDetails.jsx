@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { taskService, commentService, userService } from '../services/api';
+import { taskService, commentService } from '../services/api';
 import Alert from '../components/Alert';
 
 export default function TaskDetails() {
@@ -11,7 +11,6 @@ export default function TaskDetails() {
 
   const [task, setTask] = useState(null);
   const [comments, setComments] = useState([]);
-  const [projectMembers, setProjectMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -20,7 +19,6 @@ export default function TaskDetails() {
   // Edit form state
   const [status, setStatus] = useState('');
   const [priority, setPriority] = useState('');
-  const [assigneeId, setAssigneeId] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [updating, setUpdating] = useState(false);
@@ -29,7 +27,6 @@ export default function TaskDetails() {
   const [newComment, setNewComment] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
 
-  // Load task and comments
   const loadTask = async () => {
     try {
       setLoading(true);
@@ -40,15 +37,13 @@ export default function TaskDetails() {
       setTask(t);
       setStatus(t.status);
       setPriority(t.priority);
-      setAssigneeId(t.assignee?._id || '');
       setTitle(t.title);
       setDescription(t.description || '');
 
-      // Load comments
       const commRes = await commentService.getByTask(id);
       setComments(commRes.data || []);
     } catch (err) {
-      setError(err.message || 'Failed to load task');
+      setError(err.message || 'Failed to load task details');
     } finally {
       setLoading(false);
     }
@@ -58,7 +53,6 @@ export default function TaskDetails() {
     loadTask();
   }, [id]);
 
-  // Handle normal task update (sends current task.version)
   const handleUpdateTask = async (e) => {
     e.preventDefault();
     if (!task) return;
@@ -69,23 +63,21 @@ export default function TaskDetails() {
       setSuccess('');
       setConflictError(null);
 
-      // Sending version to enable optimistic concurrency check on backend
       const res = await taskService.update(id, {
         title,
         description,
         status,
         priority,
-        assigneeId: assigneeId || null,
         version: task.version
       });
 
       setTask(res.data);
-      setSuccess(`Task updated successfully to version v${res.data.version}!`);
+      setSuccess(`Task successfully updated to version v${res.data.version}.`);
     } catch (err) {
       if (err.status === 409 || err.isConflict) {
         setConflictError(
           err.message ||
-            'Concurrent Update Conflict: This task was modified by another user. Your changes were not saved to prevent overwriting.'
+            'Concurrent update conflict: This task was modified by another transaction. Changes were not committed.'
         );
       } else {
         setError(err.message || 'Failed to update task');
@@ -95,7 +87,7 @@ export default function TaskDetails() {
     }
   };
 
-  // Evaluator demonstration: Deliberately simulates a stale update with outdated version
+  // Simulates a stale update with mismatched version to test HTTP 409
   const handleSimulateConflict = async () => {
     if (!task) return;
     try {
@@ -104,7 +96,6 @@ export default function TaskDetails() {
       setSuccess('');
       setConflictError(null);
 
-      // Deliberately pass stale version (e.g. current version - 1, or 0)
       const staleVersion = Math.max(0, (task.version || 1) - 1);
 
       await taskService.update(id, {
@@ -112,13 +103,12 @@ export default function TaskDetails() {
         description,
         status,
         priority,
-        assigneeId: assigneeId || null,
         version: staleVersion
       });
     } catch (err) {
       if (err.status === 409 || err.isConflict) {
         setConflictError(
-          `[HTTP 409 Conflict Detected] ${err.message || 'Task version is stale.'} The server successfully rejected the update because another transaction committed first.`
+          `[HTTP 409 Conflict Detected] ${err.message || 'Version mismatch.'} The server rejected the stale update.`
         );
       } else {
         setError(err.message);
@@ -128,7 +118,6 @@ export default function TaskDetails() {
     }
   };
 
-  // Add Comment
   const handleAddComment = async (e) => {
     e.preventDefault();
     if (!newComment.trim()) return;
@@ -138,7 +127,6 @@ export default function TaskDetails() {
       setError('');
       await commentService.create(id, newComment);
       setNewComment('');
-      // Refresh comments
       const commRes = await commentService.getByTask(id);
       setComments(commRes.data || []);
     } catch (err) {
@@ -148,7 +136,6 @@ export default function TaskDetails() {
     }
   };
 
-  // Delete Comment
   const handleDeleteComment = async (commentId) => {
     if (!window.confirm('Delete this comment?')) return;
     try {
@@ -159,9 +146,8 @@ export default function TaskDetails() {
     }
   };
 
-  // Delete Task
   const handleDeleteTask = async () => {
-    if (!window.confirm(`Are you sure you want to delete task "${task?.title}"?`)) return;
+    if (!window.confirm(`Confirm deletion of task "${task?.title}"?`)) return;
     try {
       await taskService.delete(id);
       navigate(`/projects/${task?.project?._id || task?.project}`);
@@ -189,9 +175,9 @@ export default function TaskDetails() {
       <div className="main-content">
         <div className="card">
           <h2>Task Not Found</h2>
-          <p className="text-muted">The task may have been removed or does not exist.</p>
+          <p className="text-muted">The requested task could not be located.</p>
           <Link to="/projects" className="btn btn-primary" style={{ marginTop: '1rem' }}>
-            Back to Projects
+            Return to Projects
           </Link>
         </div>
       </div>
@@ -200,7 +186,6 @@ export default function TaskDetails() {
 
   return (
     <div className="main-content">
-      {/* Header */}
       <div className="page-header">
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
@@ -213,7 +198,11 @@ export default function TaskDetails() {
             </span>
           </div>
           <p className="text-muted">
-            Project: <Link to={`/projects/${task.project?._id || task.project}`} style={{ color: 'var(--primary)', textDecoration: 'none' }}>
+            Project:{' '}
+            <Link
+              to={`/projects/${task.project?._id || task.project}`}
+              style={{ color: 'var(--primary)', textDecoration: 'none' }}
+            >
               {task.project?.title || 'Back to Project'}
             </Link>
           </p>
@@ -233,11 +222,11 @@ export default function TaskDetails() {
       {/* HTTP 409 Conflict Banner */}
       {conflictError && (
         <div className="conflict-banner">
-          <h4>⚠️ Concurrent Update Conflict (HTTP 409)</h4>
+          <h4>Version Conflict Detected (HTTP 409)</h4>
           <p style={{ margin: '0.5rem 0' }}>{conflictError}</p>
           <p className="text-muted text-sm">
-            To prevent overwriting changes made by another team member, your update was rejected.
-            Click below to reload the latest task state and reconcile changes.
+            Another team member updated this task before your changes were submitted. To prevent accidental data
+            overwrites, your modification was rejected. Please reload the latest state before attempting changes.
           </p>
           <button
             type="button"
@@ -245,7 +234,7 @@ export default function TaskDetails() {
             style={{ marginTop: '0.75rem' }}
             onClick={loadTask}
           >
-            🔄 Reload Latest State
+            Reload Latest State
           </button>
         </div>
       )}
@@ -256,7 +245,7 @@ export default function TaskDetails() {
       <div className="grid-2">
         {/* Left Column: Edit Form */}
         <div className="card">
-          <h3>Task Details & Status</h3>
+          <h3>Task Details & Attributes</h3>
           <form onSubmit={handleUpdateTask} style={{ marginTop: '1.25rem' }}>
             <div className="form-group">
               <label className="form-label" htmlFor="title">Task Title</label>
@@ -326,18 +315,17 @@ export default function TaskDetails() {
             {!isViewer && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1.5rem' }}>
                 <button type="submit" className="btn btn-primary" disabled={updating}>
-                  {updating ? 'Saving...' : `Save Changes (v${task.version ?? 1})`}
+                  {updating ? 'Saving...' : `Save Changes (Version: v${task.version ?? 1})`}
                 </button>
 
-                {/* 409 Demonstration button */}
                 <button
                   type="button"
-                  className="btn btn-warning btn-sm"
+                  className="btn btn-secondary btn-sm"
                   onClick={handleSimulateConflict}
                   disabled={updating}
-                  title="Simulates submitting an update with an outdated version to trigger HTTP 409"
+                  title="Simulates submitting with an outdated version to verify HTTP 409 handling"
                 >
-                  🧪 Simulate Stale Update (Test HTTP 409)
+                  Simulate Stale Version Update (Test HTTP 409)
                 </button>
               </div>
             )}
@@ -348,14 +336,13 @@ export default function TaskDetails() {
         <div className="card">
           <h3>Comments & Discussion ({comments.length})</h3>
 
-          {/* Add Comment */}
           {!isViewer && (
             <form onSubmit={handleAddComment} style={{ marginTop: '1rem', marginBottom: '1.5rem' }}>
               <div className="form-group" style={{ marginBottom: '0.5rem' }}>
                 <textarea
                   className="form-textarea"
                   rows={2}
-                  placeholder="Leave a comment or update..."
+                  placeholder="Add a comment or status update..."
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                   required
@@ -371,10 +358,9 @@ export default function TaskDetails() {
             </form>
           )}
 
-          {/* Comments List */}
           {comments.length === 0 ? (
             <p className="text-muted" style={{ padding: '1rem 0' }}>
-              No comments yet. Be the first to share an update.
+              No comments posted yet.
             </p>
           ) : (
             <div>

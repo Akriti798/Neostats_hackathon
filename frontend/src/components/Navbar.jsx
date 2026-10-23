@@ -31,8 +31,8 @@ export default function Navbar() {
     <header className="navbar">
       <div className="navbar-container">
         <Link to="/dashboard" className="navbar-brand">
-          <span className="brand-icon">⚡</span>
-          <span className="brand-name">NeoStats Hub</span>
+          <span className="brand-mark">CW</span>
+          <span className="brand-name">CollabWorkers</span>
         </Link>
 
         <nav className="navbar-links">
@@ -53,7 +53,7 @@ export default function Navbar() {
               to="/users"
               className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
             >
-              Users (Admin)
+              Users
             </NavLink>
           )}
           <NavLink
@@ -72,7 +72,7 @@ export default function Navbar() {
             </span>
           </div>
           <button onClick={handleLogout} className="btn-secondary btn-sm" title="Log out">
-            Logout
+            Sign Out
           </button>
         </div>
       </div>

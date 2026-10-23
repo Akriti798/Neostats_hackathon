@@ -9,7 +9,7 @@ export default function Login() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const { login } = useAuth();
+  const { login, previewLogin } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -25,25 +25,24 @@ export default function Login() {
       await login(email, password);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.message || 'Login failed. Please check your credentials.');
+      setError(err.message || 'Login failed. Please verify credentials.');
     } finally {
       setSubmitting(false);
     }
   };
 
-  const setDemoCredentials = (demoEmail, demoPassword) => {
-    setEmail(demoEmail);
-    setPassword(demoPassword);
-    setError('');
+  const handleInstantPreview = (roleName) => {
+    previewLogin(roleName);
+    navigate('/dashboard');
   };
 
   return (
     <div className="auth-page">
       <div className="auth-card">
-        <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-          <span style={{ fontSize: '2.5rem' }}>⚡</span>
-          <h2>NeoStats Project Hub</h2>
-          <p className="text-muted">Collaborative Project Management Platform</p>
+        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+          <div className="brand-badge-large">CW</div>
+          <h2 style={{ marginTop: '0.75rem', fontSize: '1.6rem' }}>CollabWorkers</h2>
+          <p className="text-muted text-sm">Collaborative Project Management Platform</p>
         </div>
 
         {error && <Alert type="error" message={error} onDismiss={() => setError('')} />}
@@ -57,7 +56,7 @@ export default function Login() {
               className="form-input"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="user@neostats.com"
+              placeholder="user@collabworkers.com"
               required
             />
           </div>
@@ -87,38 +86,41 @@ export default function Login() {
 
         <div className="demo-login-box">
           <p className="text-muted text-sm" style={{ fontWeight: 600, textAlign: 'center' }}>
-            🚀 Evaluator Quick Demo Accounts
+            Instant Role Preview (Direct Access)
           </p>
           <div className="demo-btn-grid">
             <button
               type="button"
               className="btn-secondary btn-sm"
-              onClick={() => setDemoCredentials('admin@neostats.com', 'Admin@123')}
+              onClick={() => handleInstantPreview('Admin')}
             >
-              👑 Admin
+              Admin View
             </button>
             <button
               type="button"
               className="btn-secondary btn-sm"
-              onClick={() => setDemoCredentials('pm@neostats.com', 'Pm@123')}
+              onClick={() => handleInstantPreview('Project Manager')}
             >
-              💼 Project Manager
+              Project Manager
             </button>
             <button
               type="button"
               className="btn-secondary btn-sm"
-              onClick={() => setDemoCredentials('dev@neostats.com', 'Dev@123')}
+              onClick={() => handleInstantPreview('Team Member')}
             >
-              🛠️ Team Member
+              Team Member
             </button>
             <button
               type="button"
               className="btn-secondary btn-sm"
-              onClick={() => setDemoCredentials('viewer@neostats.com', 'Viewer@123')}
+              onClick={() => handleInstantPreview('Viewer')}
             >
-              👀 Viewer
+              Viewer View
             </button>
           </div>
+          <p className="text-muted text-sm" style={{ textAlign: 'center', marginTop: '0.75rem', fontSize: '0.78rem' }}>
+            Click any role above to instantly inspect all pages, permissions, and features.
+          </p>
         </div>
       </div>
     </div>

@@ -12,7 +12,7 @@ export default function ProjectDetails() {
   const [project, setProject] = useState(null);
   const [tasks, setTasks] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
-  const [activeTab, setActiveTab] = useState('tasks'); // 'overview' | 'tasks' | 'team'
+  const [activeTab, setActiveTab] = useState('tasks'); // 'tasks' | 'team' | 'overview'
   const [taskFilter, setTaskFilter] = useState('All');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -32,12 +32,10 @@ export default function ProjectDetails() {
   const [memberRole, setMemberRole] = useState('Member');
   const [submittingMember, setSubmittingMember] = useState(false);
 
-  // Check if current user is PM of this project or Admin
   const isProjectManagerOfThis =
     project?.manager?._id === user?._id ||
     project?.members?.some((m) => m.user?._id === user?._id && m.role === 'Manager');
   const canManageProject = user?.role === 'Admin' || isProjectManagerOfThis;
-  const isViewer = user?.role === 'Viewer';
 
   const loadData = async () => {
     try {
@@ -59,7 +57,6 @@ export default function ProjectDetails() {
     loadData();
   }, [id, taskFilter]);
 
-  // Load all users for member and task assignee dropdowns
   useEffect(() => {
     if (canManageProject) {
       userService.getAll()
@@ -81,7 +78,7 @@ export default function ProjectDetails() {
         priority: taskPriority,
         assigneeId: taskAssignee || undefined
       });
-      setSuccess('Task created successfully!');
+      setSuccess('Task created successfully.');
       setTaskTitle('');
       setTaskDesc('');
       setTaskAssignee('');
@@ -105,7 +102,7 @@ export default function ProjectDetails() {
         userId: selectedUserId,
         role: memberRole
       });
-      setSuccess('Team member added successfully!');
+      setSuccess('Team member added successfully.');
       setSelectedUserId('');
       setIsMemberModalOpen(false);
       loadData();
@@ -156,7 +153,7 @@ export default function ProjectDetails() {
           <h2>Project Not Found</h2>
           <p className="text-muted">The requested project could not be found or you do not have permission.</p>
           <Link to="/projects" className="btn btn-primary" style={{ marginTop: '1rem' }}>
-            Back to Projects
+            Return to Projects
           </Link>
         </div>
       </div>
@@ -165,7 +162,6 @@ export default function ProjectDetails() {
 
   return (
     <div className="main-content">
-      {/* Project Top Header */}
       <div className="page-header">
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
@@ -175,7 +171,7 @@ export default function ProjectDetails() {
             </span>
           </div>
           <p className="text-muted">
-            Manager: <strong>{project.manager?.name || 'Unassigned'}</strong> • {project.members?.length || 0} Team Members
+            Manager: <strong>{project.manager?.name || 'Unassigned'}</strong> • {project.members?.length || 0} Members
           </p>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -199,19 +195,19 @@ export default function ProjectDetails() {
           className={`tab-btn ${activeTab === 'tasks' ? 'active' : ''}`}
           onClick={() => setActiveTab('tasks')}
         >
-          📋 Tasks ({tasks.length})
+          Tasks ({tasks.length})
         </button>
         <button
           className={`tab-btn ${activeTab === 'team' ? 'active' : ''}`}
           onClick={() => setActiveTab('team')}
         >
-          👥 Team Members ({project.members?.length || 0})
+          Team Members ({project.members?.length || 0})
         </button>
         <button
           className={`tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
           onClick={() => setActiveTab('overview')}
         >
-          ℹ️ Project Overview
+          Project Overview
         </button>
       </div>
 
@@ -243,7 +239,7 @@ export default function ProjectDetails() {
               <p className="text-muted">
                 {taskFilter === 'All'
                   ? 'No tasks created yet for this project.'
-                  : `No tasks with status "${taskFilter}".`}
+                  : `No tasks matching filter "${taskFilter}".`}
               </p>
             </div>
           ) : (
@@ -319,11 +315,10 @@ export default function ProjectDetails() {
                 </tr>
               </thead>
               <tbody>
-                {/* Project Manager row */}
                 {project.manager && (
                   <tr>
                     <td>
-                      <strong>{project.manager.name}</strong> (Project Manager)
+                      <strong>{project.manager.name}</strong>
                     </td>
                     <td>{project.manager.email}</td>
                     <td>
@@ -333,7 +328,6 @@ export default function ProjectDetails() {
                   </tr>
                 )}
 
-                {/* Team Members */}
                 {project.members && project.members.map((m) => (
                   <tr key={m.user?._id || m._id}>
                     <td><strong>{m.user?.name}</strong></td>
@@ -375,7 +369,7 @@ export default function ProjectDetails() {
       {/* TAB 3: Overview */}
       {activeTab === 'overview' && (
         <div className="card">
-          <h3>Project Details</h3>
+          <h3>Project Overview</h3>
           <div style={{ marginTop: '1rem' }}>
             <p><strong>Description:</strong></p>
             <p style={{ whiteSpace: 'pre-wrap', color: 'var(--text-main)' }}>
@@ -384,7 +378,7 @@ export default function ProjectDetails() {
           </div>
           <div style={{ marginTop: '1.5rem', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
             <p className="text-muted text-sm">Created on: {new Date(project.createdAt).toLocaleDateString()}</p>
-            <p className="text-muted text-sm">Project ID: <code>{project._id}</code></p>
+            <p className="text-muted text-sm">Project Identifier: <code>{project._id}</code></p>
           </div>
         </div>
       )}
@@ -400,7 +394,7 @@ export default function ProjectDetails() {
               className="form-input"
               value={taskTitle}
               onChange={(e) => setTaskTitle(e.target.value)}
-              placeholder="e.g. Implement JWT Authentication"
+              placeholder="e.g. Implement Optimistic Locking for Concurrent Edits"
               required
             />
           </div>
@@ -412,7 +406,7 @@ export default function ProjectDetails() {
               className="form-textarea"
               value={taskDesc}
               onChange={(e) => setTaskDesc(e.target.value)}
-              placeholder="Detailed acceptance criteria..."
+              placeholder="Acceptance criteria and technical notes..."
             />
           </div>
 

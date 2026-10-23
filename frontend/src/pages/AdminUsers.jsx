@@ -25,7 +25,7 @@ export default function AdminUsers() {
       const res = await userService.getAll();
       setUsers(res.data || []);
     } catch (err) {
-      setError(err.message || 'Failed to load users');
+      setError(err.message || 'Failed to load user directory');
     } finally {
       setLoading(false);
     }
@@ -43,7 +43,7 @@ export default function AdminUsers() {
       setSubmitting(true);
       setError('');
       await userService.create({ name, email, password, role });
-      setSuccess(`User "${name}" created successfully!`);
+      setSuccess(`User "${name}" created successfully.`);
       setName('');
       setEmail('');
       setPassword('');
@@ -59,7 +59,7 @@ export default function AdminUsers() {
 
   const handleToggleDeactivate = async (u) => {
     const action = u.isActive ? 'deactivate' : 'reactivate';
-    if (!window.confirm(`Are you sure you want to ${action} ${u.name}?`)) return;
+    if (!window.confirm(`Confirm action: ${action} user "${u.name}"?`)) return;
 
     try {
       setError('');
@@ -75,7 +75,7 @@ export default function AdminUsers() {
     try {
       setError('');
       await userService.update(userId, { role: newRole });
-      setSuccess('User role updated successfully.');
+      setSuccess('User platform role updated.');
       loadUsers();
     } catch (err) {
       setError(err.message || 'Failed to update user role');
@@ -86,11 +86,11 @@ export default function AdminUsers() {
     <div className="main-content">
       <div className="page-header">
         <div>
-          <h1>User Management</h1>
-          <p className="text-muted">Administrator panel: Create, view, update, and deactivate users</p>
+          <h1>User Directory & Access Control</h1>
+          <p className="text-muted">Administrator panel: Provision, update, and manage accounts</p>
         </div>
         <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
-          + Create New User
+          + Create User
         </button>
       </div>
 
@@ -110,7 +110,7 @@ export default function AdminUsers() {
                 <tr>
                   <th>Name</th>
                   <th>Email</th>
-                  <th>Role</th>
+                  <th>Platform Role</th>
                   <th>Status</th>
                   <th>Actions</th>
                 </tr>
@@ -122,7 +122,7 @@ export default function AdminUsers() {
                       <strong>{u.name}</strong>
                       {u._id === currentUser?._id && (
                         <span className="text-muted text-sm" style={{ marginLeft: '0.5rem' }}>
-                          (You)
+                          (Current User)
                         </span>
                       )}
                     </td>
@@ -167,7 +167,7 @@ export default function AdminUsers() {
       </div>
 
       {/* Modal: Create User */}
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Create New User">
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Provision New User">
         <form onSubmit={handleCreateUser}>
           <div className="form-group">
             <label className="form-label" htmlFor="name">Full Name *</label>
@@ -177,7 +177,7 @@ export default function AdminUsers() {
               className="form-input"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Alex Morgan"
+              placeholder="e.g. Rachel Adams"
               required
             />
           </div>
@@ -190,13 +190,13 @@ export default function AdminUsers() {
               className="form-input"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="alex@neostats.com"
+              placeholder="rachel@collabworkers.com"
               required
             />
           </div>
 
           <div className="form-group">
-            <label className="form-label" htmlFor="password">Password *</label>
+            <label className="form-label" htmlFor="password">Temporary Password *</label>
             <input
               id="password"
               type="password"
@@ -216,10 +216,10 @@ export default function AdminUsers() {
               value={role}
               onChange={(e) => setRole(e.target.value)}
             >
-              <option value="Admin">Admin (Full system control)</option>
-              <option value="Project Manager">Project Manager (Projects, tasks & team)</option>
-              <option value="Team Member">Team Member (Assigned tasks & comments)</option>
-              <option value="Viewer">Viewer (Read-only)</option>
+              <option value="Admin">Admin (Full administrative privileges)</option>
+              <option value="Project Manager">Project Manager (Manage projects, tasks, team)</option>
+              <option value="Team Member">Team Member (Task execution & discussions)</option>
+              <option value="Viewer">Viewer (Read-only access)</option>
             </select>
           </div>
 
@@ -232,7 +232,7 @@ export default function AdminUsers() {
               Cancel
             </button>
             <button type="submit" className="btn btn-primary" disabled={submitting}>
-              {submitting ? 'Creating...' : 'Create User'}
+              {submitting ? 'Creating...' : 'Create Account'}
             </button>
           </div>
         </form>
